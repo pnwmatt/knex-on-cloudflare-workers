@@ -1,149 +1,57 @@
-# [knex.js](https://knex.github.io/documentation/)
+# knex-on-cloudflare-workers
 
-[![npm version](http://img.shields.io/npm/v/knex.svg)](https://npmjs.org/package/knex)
-[![npm downloads](https://img.shields.io/npm/dm/knex.svg)](https://npmjs.org/package/knex)
-![](https://github.com/knex/knex/workflows/CI/badge.svg)
-[![Coverage Status](https://coveralls.io/repos/knex/knex/badge.svg?branch=master)](https://coveralls.io/r/knex/knex?branch=master)
-[![Dependencies Status](https://img.shields.io/librariesio/github/knex/knex)](https://libraries.io/npm/knex)
-[![Gitter chat](https://badges.gitter.im/tgriesser/knex.svg)](https://gitter.im/tgriesser/knex)
+This is a fork of the awesome [Knex.js](https://knexjs.org/) library, adapted to be able to be "rolledup" and work on Cloudflare Workers.
 
-> **A SQL query builder that is _flexible_, _portable_, and _fun_ to use!**
+## My setup
 
-A batteries-included, multi-dialect (PostgreSQL, MySQL, CockroachDB, MSSQL, SQLite3, Oracle (including Oracle Wallet Authentication)) query builder for
-Node.js, featuring:
+- Nuxt v4
+- Nuxt UI
+- TypeScript
+- [Sutando ORM](https://sutando.org) as an Active Record ORM.  With `shared/` in Nuxt4, I can use the same Models code on the frontend Nuxt side and the backend Knex-connected database.
+- [Cloudflare D1](https://developers.cloudflare.com/d1/) as the database
+  - Knex doesn't work out-of-the-box for D1, but the same author of Sutando created a [D1 Dialect for Knex](https://github.com/kiddyuchina/knex-cloudflare-d1)
 
-- [transactions](https://knex.github.io/documentation/#Transactions)
-- [connection pooling](https://knex.github.io/documentation/#Installation-pooling)
-- [streaming queries](https://knex.github.io/documentation/#Interfaces-Streams)
-- both a [promise](https://knex.github.io/documentation/#Interfaces-Promises) and [callback](https://knex.github.io/documentation/#Interfaces-Callbacks) API
-- a [thorough test suite](https://github.com/knex/knex/actions)
+Sutando has a working example of the ORM on a [Cloudflare Worker + Hono Router with a D1 Database](https://github.com/sutandojs/sutando-examples/blob/main/typescript/rest-hono-cf-d1/src/index.ts) - so I knew Sutando *could* work with D1, but when I wired it into my Nuxt4 app, I was able to get my `wrangler dev` working - but deploys failed due to bugs that seemingly didn't happen in rest-hono-cf-d1. 
 
-Node.js versions 12+ are supported.
+As of August 2025, this package when combined with the above, creates a working Nuxt 4 + Sutando + D1 stack.  I plan to continue to make modifications to this package if other errors arise and apply security updates if available.  Pull requests are welcome.
 
-- Take a look at the [full documentation](https://knex.github.io/documentation) to get started!
-- Browse the [list of plugins and tools](https://github.com/knex/knex/blob/master/ECOSYSTEM.md) built for knex
-- Check out our [recipes wiki](https://github.com/knex/knex/wiki/Recipes) to search for solutions to some specific problems
-- In case of upgrading from an older version, see [migration guide](https://github.com/knex/knex/blob/master/UPGRADING.md)
+## Modifications made for `knex-on-cloudflare-workers`
+This package, `knex-on-cloudflare-workers`, is my attempt to fix the issues I experienced to enable a Nuxt/Sutando/D1 stack.
 
-You can report bugs and discuss features on the [GitHub issues page](https://github.com/knex/knex/issues) or send tweets to [@kibertoad](http://twitter.com/kibertoad).
+1) Knex, the project, uses the `debug` package in a few files.  I believe there's some code in the setup of a cloud-based Cloudflare Worker that overwrites what `debug` name that overrides Knex's package.json inclusing of `debug`.
+    - I removed the `debug` package from this package.json and replaced calls to it (`require('debug');`) with `() => { }` to no-op the calls to debug.
+      - [ ] I am going to search more/write on their forums and confirm this hypothesis with them.  There was some references to this being an issue, but not specifically for `debug`.
+2) Rollup had a tough time understanding what a `optional` dependency is in package.json.  Even though `lib/dialect/mysql/` is dynamically loaded only when a Knex client uses `mysql`, Rollup was wanting me to add the `mysql` drivers to package.json.
+    - I experimented a lot with `external` and other flags in the `rollup.config.js` (which in my stack was in nuxt.config.ts with both vite and nitro), but after much head bashing, I opted to just remove the `lib/dialect/*` from the code base.  There are changes to constant defs, page requirements, and some other areas of the code that had a reference to other drivers.
+      - [ ] I am going to search more/write on their forums and confirm this problem.
+3) Lastly, I was getting a weird mix-up of `.js` and `.ts` in my main project when I updated my package.json to use this package as an alias for `knex` to override Sutando's dependency on the real Knex.
+    - I opted to remove the .ts files from lib/dialect and let the classic JS do its thing.
 
-For support and questions, join our [Gitter channel](https://gitter.im/tgriesser/knex).
+## Other fixes
 
-For knex-based Object Relational Mapper, see:
+- Fixed a regression in [knex-cloudflare-d1](https://github.com/kiddyuchina/knex-cloudflare-d1/pull/5)
 
-- https://github.com/Vincit/objection.js
-- https://github.com/mikro-orm/mikro-orm
-- https://bookshelfjs.org
+## Usage
 
-To see the SQL that Knex will generate for a given query, you can use [Knex Query Lab](https://michaelavila.com/knex-querylab/)
+### package.json
 
-## Examples
-
-We have several examples [on the website](http://knexjs.org). Here is the first one to get you started:
-
-```js
-const knex = require('knex')({
-  client: 'sqlite3',
-  connection: {
-    filename: './data.db',
-  },
-});
-
-try {
-  // Create a table
-  await knex.schema
-    .createTable('users', (table) => {
-      table.increments('id');
-      table.string('user_name');
-    })
-    // ...and another
-    .createTable('accounts', (table) => {
-      table.increments('id');
-      table.string('account_name');
-      table.integer('user_id').unsigned().references('users.id');
-    });
-
-  // Then query the table...
-  const insertedRows = await knex('users').insert({ user_name: 'Tim' });
-
-  // ...and using the insert id, insert into the other table.
-  await knex('accounts').insert({
-    account_name: 'knex',
-    user_id: insertedRows[0],
-  });
-
-  // Query both of the rows.
-  const selectedRows = await knex('users')
-    .join('accounts', 'users.id', 'accounts.user_id')
-    .select('users.user_name as user', 'accounts.account_name as account');
-
-  // map over the results
-  const enrichedRows = selectedRows.map((row) => ({ ...row, active: true }));
-
-  // Finally, add a catch statement
-} catch (e) {
-  console.error(e);
+Add these to your dependencies:
+```
+{
+  "dependencies": {
+    "knex": "https://github.com/pnwmatt/knex-on-cloudflare-workers.git#1.0.0",
+    "knex-cloudflare-d1": "^0.2.1",
+    "sutando": "^1.7.2",
+  }
 }
 ```
 
-## TypeScript example
-
-```ts
-import { Knex, knex } from 'knex';
-
-interface User {
-  id: number;
-  age: number;
-  name: string;
-  active: boolean;
-  departmentId: number;
-}
-
-const config: Knex.Config = {
-  client: 'sqlite3',
-  connection: {
-    filename: './data.db',
-  },
-};
-
-const knexInstance = knex(config);
-
-try {
-  const users = await knex<User>('users').select('id', 'age');
-} catch (err) {
-  // error handling
+Add this `resolutions` to your package.json as well:
+```
+{
+  "resolutions": {
+    "knex": "https://github.com/pnwmatt/knex-on-cloudflare-workers.git#3.1.7"
+  }
 }
 ```
 
-## Usage as ESM module
-
-If you are launching your Node application with `--experimental-modules`, `knex.mjs` should be picked up automatically and named ESM import should work out-of-the-box.
-Otherwise, if you want to use named imports, you'll have to import knex like this:
-
-```js
-import { knex } from 'knex/knex.mjs';
-```
-
-You can also just do the default import:
-
-```js
-import knex from 'knex';
-```
-
-If you are not using TypeScript and would like the IntelliSense of your IDE to work correctly, it is recommended to set the type explicitly:
-
-```js
-/**
- * @type {Knex}
- */
-const database = knex({
-  client: 'mysql',
-  connection: {
-    host: '127.0.0.1',
-    user: 'your_database_user',
-    password: 'your_database_password',
-    database: 'myapp_test',
-  },
-});
-database.migrate.latest();
-```
