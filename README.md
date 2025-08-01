@@ -39,7 +39,7 @@ Add these to your dependencies:
 ```
 {
   "dependencies": {
-    "knex": "https://github.com/pnwmatt/knex-on-cloudflare-workers.git#1.0.0",
+    "knex": "https://github.com/pnwmatt/knex-on-cloudflare-workers.git#v1.0.0",
     "knex-cloudflare-d1": "^0.2.1",
     "sutando": "^1.7.2",
   }
@@ -50,7 +50,7 @@ Add this `resolutions` to your package.json as well:
 ```
 {
   "resolutions": {
-    "knex": "https://github.com/pnwmatt/knex-on-cloudflare-workers.git#3.1.7"
+    "knex": "https://github.com/pnwmatt/knex-on-cloudflare-workers.git#v1.0.0"
   }
 }
 ```
