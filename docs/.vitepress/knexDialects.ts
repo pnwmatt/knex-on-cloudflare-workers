@@ -2,16 +2,7 @@ import Knex from 'knex';
 import type { PluginOption } from 'vite';
 
 const dialects = {
-  'better-sqlite3': Knex({ client: 'better-sqlite3' }),
-  cockroachdb: Knex({ client: 'cockroachdb' }),
-  mssql: Knex({ client: 'mssql' }),
-  mysql: Knex({ client: 'mysql' }),
-  mysql2: Knex({ client: 'mysql2' }),
-  oracledb: Knex({ client: 'oracledb' }),
-  pgnative: Knex({ client: 'pgnative' }),
-  postgres: Knex({ client: 'postgres' }),
-  redshift: Knex({ client: 'redshift' }),
-  sqlite3: Knex({ client: 'sqlite3' }),
+  sqlite3: Knex({ client: 'sqlite3' })
 };
 
 export default function knexDialects(): PluginOption {
