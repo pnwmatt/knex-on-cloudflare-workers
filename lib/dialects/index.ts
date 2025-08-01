@@ -1,7 +1,10 @@
-const { resolveClientNameWithAliases } = require('../util/helpers');
+// @ts-ignore
+import { resolveClientNameWithAliases } from '../util/helpers';
+// @ts-ignore
+import sqlite3Dialect from './sqlite3';
 
-const dbNameToDialectLoader: Record<string, () => any> = Object.freeze({
-  sqlite3: () => require('./sqlite3')
+const dbNameToDialectLoader: Record<string, any> = Object.freeze({
+  sqlite3: sqlite3Dialect
 });
 
 /**
@@ -13,9 +16,9 @@ const dbNameToDialectLoader: Record<string, () => any> = Object.freeze({
  */
 export function getDialectByNameOrAlias(clientName: string) {
   const resolvedClientName = resolveClientNameWithAliases(clientName);
-  const dialectLoader = dbNameToDialectLoader[resolvedClientName];
-  if (!dialectLoader) {
+  const dialect = dbNameToDialectLoader[resolvedClientName];
+  if (!dialect) {
     throw new Error(`Invalid clientName given: ${clientName}`);
   }
-  return dialectLoader();
+  return dialect;
 }
