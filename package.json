@@ -8,9 +8,8 @@
     "node": ">=16"
   },
   "scripts": {
-    "build": "npm run build:gitignore && npm run build:ts && npm run format",
+    "build": "npm run build:gitignore && npm run format",
     "clean": "node scripts/clean.js",
-    "build:ts": "tsc",
     "build:gitignore": "node scripts/update_gitignore_for_tsc_output.js run",
     "format": "prettier --write --list-different .",
     "format:check": "prettier --list-different .",
@@ -62,8 +61,6 @@
       "*.js": "eslint --cache --fix"
     },
     "devDependencies": {
-      "@tsconfig/recommended": "^1.0.1",
-      "@types/node": "^20.4.0",
       "better-sqlite3": "^9.1.1",
       "chai": "^4.3.6",
       "chai-as-promised": "^7.1.1",
@@ -91,10 +88,7 @@
       "sqlite3": "^5.0.11",
       "tap-spec": "^5.0.0",
       "tape": "^5.6.0",
-      "toxiproxy-node-client": "^2.0.6",
-      "ts-node": "^10.9.1",
-      "tsd": "^0.28.1",
-      "typescript": "5.0.4"
+      "toxiproxy-node-client": "^2.0.6"
     },
     "buildDependencies": [
       "rimraf"
@@ -147,8 +141,6 @@
       "bin/*",
       "lib/",
       "lib/**/*.js",
-      "!lib/**/*.ts",
-      "!lib/**/*.d.ts",
       "!lib/**/*.js.map",
       "!lib/.gitignore",
       "scripts/*",
