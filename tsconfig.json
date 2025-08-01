@@ -19,7 +19,7 @@
     "baseUrl": ".",
     "skipLibCheck": true,
     "allowJs": true,
-    "noEmit": true
+    "noEmitOnError": false
   },
   "include": ["lib/**/*.ts"],
   "exclude": ["node_modules"]
